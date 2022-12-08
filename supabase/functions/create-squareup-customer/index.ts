@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.2.1/mod.ts";
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@1.35.5";
 import { Client, Environment } from "https://esm.sh/square@24.0.0";
+import { stringify } from "../_shared/index.ts";
 
 const square = new Client({
   accessToken: Deno.env.get("SQUARE_ACCESS_TOKEN")!,
@@ -27,7 +28,7 @@ serve(async (req) => {
 
   const { record } = await req.json();
 
-  console.log("Record: " + JSON.stringify(record));
+  console.log("Record: " + stringify(record));
 
   // get the user id and email from the request body record
   const { id: userId, email } = record;
@@ -68,8 +69,8 @@ serve(async (req) => {
   } catch (error) {
     console.error("An error occurred: " + error.message);
     return new Response(
-      JSON.stringify({
-        message: `Error creating a customer through stripe or the database , error: ${JSON.stringify(
+      stringify({
+        message: `Error creating a customer through stripe or the database , error: ${stringify(
           error
         )}`,
       }),
@@ -78,9 +79,9 @@ serve(async (req) => {
   }
 
   // log the customer object
-  console.log("Customer created: " + JSON.stringify(customer));
+  console.log("Customer created: " + stringify(customer));
 
-  return new Response(JSON.stringify(customer), {
+  return new Response(stringify(customer), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
