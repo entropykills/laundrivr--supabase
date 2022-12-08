@@ -1,5 +1,12 @@
+import "https://deno.land/x/xhr@0.2.1/mod.ts";
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@1.35.5";
+import { Client, Environment } from "https://esm.sh/square@24.0.0";
+
+const square = new Client({
+  accessToken: Deno.env.get("SQUARE_ACCESS_TOKEN")!,
+  environment: Environment.Sandbox,
+});
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -18,14 +25,62 @@ serve(async (req) => {
     });
   }
 
-  const { userId } = await req.json();
+  const { record } = await req.json();
 
-  const data = {
-    "test": "test"
-  };
+  console.log("Record: " + JSON.stringify(record));
 
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
+  // get the user id and email from the request body record
+  const { id: userId, email } = record;
+
+  let customer;
+
+  try {
+    console.log("Creating customer for user: " + userId);
+    const response = await square.customersApi.createCustomer({
+      emailAddress: email,
+      referenceId: userId,
+    });
+
+    customer = response.result.customer;
+    // get the customer id from the response
+    const customerId = customer?.id;
+
+    // log the customer id
+    console.log("Creating customer ID: " + customerId);
+
+    // if the customer id exists, update the user in supabase with the customer id
+    if (customerId) {
+      const { error } = await supabase
+        .from("user_metadata")
+        .update({ square_customer_id: customerId })
+        .eq("id", userId);
+
+      if (error) {
+        throw new Error(
+          "Error updating the user with the customer id, error: " + error.message
+        );
+      }
+    } else {
+      throw new Error(
+        "Customer ID not found, there was an error creating the customer"
+      );
+    }
+  } catch (error) {
+    console.error("An error occurred: " + error.message);
+    return new Response(
+      JSON.stringify({
+        message: `Error creating a customer through stripe or the database , error: ${JSON.stringify(
+          error
+        )}`,
+      }),
+      { status: 500 }
+    );
+  }
+
+  // log the customer object
+  console.log("Customer created: " + JSON.stringify(customer));
+
+  return new Response(JSON.stringify(customer), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 });
