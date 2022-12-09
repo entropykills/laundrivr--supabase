@@ -9,7 +9,7 @@ const squareLocationId = Deno.env.get("SQUARE_LOCATION_ID")!;
 
 const square = new Client({
   accessToken: Deno.env.get("SQUARE_ACCESS_TOKEN")!,
-  environment: Environment.Sandbox,
+  environment: Environment.Production,
 });
 
 const supabase = createClient(
@@ -103,15 +103,18 @@ serve(async (req) => {
     );
   }
 
+  // log the data
+  console.log(
+    `Found metadata: ${user.id}, customer: ${stringify(user_metadata.square_customer_id)}`
+  );
+
   // get the customer id
-  const customerId: string = user_metadata.data.square_customer_id;
+  const customerId: string = user_metadata.square_customer_id;
   // get the variation id
-  const variationId: string = variation.data.square_variation_id;
-  // get the price
-  const price: number = variation.data.price;
+  const variationId: string = variation.square_variation_id;
 
   // log the variation id
-  console.log(`Found variation id from handle: ${handle}, id: ${variation}`);
+  console.log(`Found variation id from handle: ${handle}, id: ${stringify(variation)}`);
 
   // use the square client to create a checkout link
   let checkoutLink: string | undefined;
@@ -133,7 +136,12 @@ serve(async (req) => {
 
     // if there's an error, throw it
     if (response.result.errors) {
-      throw new Error(response.result.errors[0].detail);
+      // compile all the errors into a single string, with the response from square
+      const errors = response.result.errors
+        .map((error) => error.detail)
+        .join(", ") + ", " + stringify(response);
+      
+      throw new Error(errors);
     }
 
     // get the checkout link

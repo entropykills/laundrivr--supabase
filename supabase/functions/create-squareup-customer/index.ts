@@ -6,7 +6,7 @@ import { stringify } from "../_shared/index.ts";
 
 const square = new Client({
   accessToken: Deno.env.get("SQUARE_ACCESS_TOKEN")!,
-  environment: Environment.Sandbox,
+  environment: Environment.Production,
 });
 
 const supabase = createClient(
