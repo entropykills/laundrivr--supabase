@@ -6,10 +6,11 @@ import { stringify } from "../_shared/index.ts";
 import { PackageCheckoutLinkRequest } from "../_shared/checkout.ts";
 
 const squareLocationId = Deno.env.get("SQUARE_LOCATION_ID")!;
+const squareEnvironment = Deno.env.get("SQUARE_ENVIRONMENT")!;
 
 const square = new Client({
   accessToken: Deno.env.get("SQUARE_ACCESS_TOKEN")!,
-  environment: Environment.Production,
+  environment: squareEnvironment === "production" ? Environment.Production : Environment.Sandbox,
 });
 
 const supabase = createClient(
