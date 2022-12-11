@@ -79,7 +79,7 @@ serve(async (req) => {
   const { data: user_metadata, error: customerError } = await supabase
     .from("user_metadata")
     .select("square_customer_id")
-    .eq("id", user.id)
+    .eq("user_id", user.id)
     .limit(1)
     .single();
 

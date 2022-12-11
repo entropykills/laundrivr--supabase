@@ -56,7 +56,7 @@ serve(async (req) => {
       const { error } = await supabase
         .from("user_metadata")
         .update({ square_customer_id: customerId })
-        .eq("id", userId);
+        .eq("user_id", userId);
 
       if (error) {
         throw new Error(
