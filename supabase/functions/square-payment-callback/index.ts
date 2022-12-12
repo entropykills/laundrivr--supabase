@@ -45,6 +45,8 @@ serve(async (req) => {
     );
   }
 
+  console.log("Customer ID Received: " + customerId);
+
   console.log("Package ID Received: " + packageId);
 
   // get the package data (to give to the user) from the database
