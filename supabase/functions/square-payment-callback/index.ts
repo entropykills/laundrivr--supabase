@@ -36,6 +36,7 @@ serve(async (req) => {
 
   // if the customer id or package variation id is missing, return an error
   if (!customerId || !packageId) {
+    console.error("Missing customer id or package variation id");
     return new Response(
       stringify({
         message: `Error: Missing customer id or package variation id`,
@@ -43,6 +44,8 @@ serve(async (req) => {
       { status: 500 }
     );
   }
+
+  console.log("Package ID Received: " + packageId);
 
   // get the package data (to give to the user) from the database
   const { data: packageData, error } = await supabase
@@ -54,6 +57,7 @@ serve(async (req) => {
 
   // if there is an error, return an error
   if (error) {
+    console.error("Error: " + stringify(error));
     return new Response(
       stringify({
         message: `Error: ${error.message}`,
@@ -77,6 +81,7 @@ serve(async (req) => {
 
   // if there is an error, return an error
   if (userError) {
+    console.error("Error: " + stringify(userError));
     return new Response(
       stringify({
         message: `Error: ${userError.message}`,
@@ -103,6 +108,8 @@ serve(async (req) => {
     square_variation_id: packageId,
     user_received_loads: receivedLoads,
   });
+
+  console.log("Success: Added " + receivedLoads + " loads to user " + userId);
 
   return new Response(
     stringify({

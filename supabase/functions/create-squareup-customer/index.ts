@@ -33,7 +33,7 @@ serve(async (req) => {
   console.log("Record: " + stringify(record));
 
   // get the user id and email from the request body record
-  const { id: userId, email } = record;
+  const { user_id: userId, email } = record;
 
   let customer;
 
