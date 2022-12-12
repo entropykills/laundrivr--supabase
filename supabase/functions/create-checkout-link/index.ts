@@ -10,7 +10,10 @@ const squareEnvironment = Deno.env.get("SQUARE_ENVIRONMENT")!;
 
 const square = new Client({
   accessToken: Deno.env.get("SQUARE_ACCESS_TOKEN")!,
-  environment: squareEnvironment === "production" ? Environment.Production : Environment.Sandbox,
+  environment:
+    squareEnvironment === "production"
+      ? Environment.Production
+      : Environment.Sandbox,
 });
 
 const supabase = createClient(
@@ -106,7 +109,9 @@ serve(async (req) => {
 
   // log the data
   console.log(
-    `Found metadata: ${user.id}, customer: ${stringify(user_metadata.square_customer_id)}`
+    `Found metadata: ${user.id}, customer: ${stringify(
+      user_metadata.square_customer_id
+    )}`
   );
 
   // get the customer id
@@ -115,10 +120,13 @@ serve(async (req) => {
   const variationId: string = variation.square_variation_id;
 
   // log the variation id
-  console.log(`Found variation id from handle: ${handle}, id: ${stringify(variation)}`);
+  console.log(
+    `Found variation id from handle: ${handle}, id: ${stringify(variation)}`
+  );
 
   // use the square client to create a checkout link
   let checkoutLink: string | undefined;
+  let orderId: string | undefined;
   try {
     const response = await square.checkoutApi.createPaymentLink({
       // generate a random idempotency key
@@ -138,15 +146,18 @@ serve(async (req) => {
     // if there's an error, throw it
     if (response.result.errors) {
       // compile all the errors into a single string, with the response from square
-      const errors = response.result.errors
-        .map((error) => error.detail)
-        .join(", ") + ", " + stringify(response);
-      
+      const errors =
+        response.result.errors.map((error) => error.detail).join(", ") +
+        ", " +
+        stringify(response);
+
       throw new Error(errors);
     }
 
     // get the checkout link
     checkoutLink = response.result.paymentLink!.url;
+    // get the order id
+    orderId = response.result.paymentLink!.orderId;
 
     // if there's no checkout link, throw an error
     if (!checkoutLink) {
@@ -166,6 +177,26 @@ serve(async (req) => {
 
   // log the customer object
   console.log("Checkout link created: " + stringify(checkoutLink));
+
+  // insert the order id into the pending transactions table
+  const { error: insertError } = await supabase
+    .from("pending_transactions")
+    .insert({
+      user_id: user.id,
+      square_order_id: orderId,
+      original_square_customer_id: customerId,
+    });
+
+  if (insertError) {
+    return new Response(
+      stringify({
+        message: `Error inserting the order id into the database, error: ${stringify(
+          insertError
+        )}`,
+      }),
+      { status: 500 }
+    );
+  }
 
   return new Response(stringify({ url: checkoutLink }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
