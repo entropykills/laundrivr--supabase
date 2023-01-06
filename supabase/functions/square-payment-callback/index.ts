@@ -84,7 +84,12 @@ serve(async (req) => {
   // get the user's id from the database
   const userId = userMetadata?.user_id;
   // get the user's current loads from the database
-  const userLoads = userMetadata?.loads_available;
+  let userLoads = userMetadata?.loads_available;
+
+  // if userLoads is -1, set it to 0
+  if (userLoads === -1) {
+    userLoads = 0;
+  }
 
   // update the user's loads in the database
   await supabase
