@@ -77,7 +77,7 @@ serve(async (req) => {
       { status: 500 }
     );
   }
-  
+
   // get the variation id
   const variationId: string = variation.square_variation_id;
 
@@ -144,7 +144,6 @@ serve(async (req) => {
     .insert({
       user_id: user.id,
       square_order_id: orderId,
-      original_square_customer_id: "",
     });
 
   if (insertError) {
