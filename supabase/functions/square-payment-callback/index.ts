@@ -20,21 +20,21 @@ serve(async (req) => {
     });
   }
 
-  // get the square customer id and package variation id from the request body
-  const { customer_id: customerId, package_id: packageId } = await req.json();
+  // get the user's id and package variation id from the request body
+  const { user_id: userId, package_id: packageId } = await req.json();
 
-  // if the customer id or package variation id is missing, return an error
-  if (!customerId || !packageId) {
-    console.error("Missing customer id or package variation id");
+  // if the user id or package variation id is missing, return an error
+  if (!userId || !packageId) {
+    console.error("Missing user id or package variation id");
     return new Response(
       stringify({
-        message: `Error: Missing customer id or package variation id`,
+        message: `Error: Missing user id or package variation id`,
       }),
       { status: 500 }
     );
   }
 
-  console.log("Customer ID Received: " + customerId);
+  console.log("User ID Received: " + userId);
 
   console.log("Package ID Received: " + packageId);
 
@@ -65,8 +65,8 @@ serve(async (req) => {
   // get the current user's metadata from the database
   const { data: userMetadata, error: userError } = await supabase
     .from("user_metadata")
-    .select("loads_available, user_id")
-    .eq("square_customer_id", customerId)
+    .select("loads_available")
+    .eq("user_id", userId)
     .limit(1)
     .single();
 
@@ -81,8 +81,6 @@ serve(async (req) => {
     );
   }
 
-  // get the user's id from the database
-  const userId = userMetadata?.user_id;
   // get the user's current loads from the database
   let userLoads = userMetadata?.loads_available;
 

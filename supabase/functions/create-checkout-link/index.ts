@@ -77,45 +77,7 @@ serve(async (req) => {
       { status: 500 }
     );
   }
-
-  // get the customer id from the user
-  const { data: user_metadata, error: customerError } = await supabase
-    .from("user_metadata")
-    .select("square_customer_id")
-    .eq("user_id", user.id)
-    .limit(1)
-    .single();
-
-  if (customerError) {
-    return new Response(
-      stringify({
-        message: `Error getting the square customer id from the database, error: ${stringify(
-          customerError
-        )}`,
-      }),
-      { status: 500 }
-    );
-  }
-
-  // if there's no customer id, return an error
-  if (!user_metadata) {
-    return new Response(
-      stringify({
-        message: `Error: no customer found for user: ${user.id}`,
-      }),
-      { status: 500 }
-    );
-  }
-
-  // log the data
-  console.log(
-    `Found metadata: ${user.id}, customer: ${stringify(
-      user_metadata.square_customer_id
-    )}`
-  );
-
-  // get the customer id
-  const customerId: string = user_metadata.square_customer_id;
+  
   // get the variation id
   const variationId: string = variation.square_variation_id;
 
@@ -133,7 +95,6 @@ serve(async (req) => {
       idempotencyKey: crypto.randomUUID(),
       order: {
         locationId: squareLocationId,
-        customerId: customerId,
         lineItems: [
           {
             quantity: "1",
@@ -175,7 +136,6 @@ serve(async (req) => {
     );
   }
 
-  // log the customer object
   console.log("Checkout link created: " + stringify(checkoutLink));
 
   // insert the order id into the pending transactions table
@@ -184,7 +144,7 @@ serve(async (req) => {
     .insert({
       user_id: user.id,
       square_order_id: orderId,
-      original_square_customer_id: customerId,
+      original_square_customer_id: "",
     });
 
   if (insertError) {
